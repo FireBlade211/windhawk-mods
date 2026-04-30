@@ -239,46 +239,46 @@ void WhTool_ModUninit() {
 
         if (SUCCEEDED(hr))
         {
-            while (true) {
-                long count = 0;
-                pShellWindows->get_Count(&count);
+            long count = 0;
+            pShellWindows->get_Count(&count);
 
-                 for (long i = 0; i < count; i++) {
-                    VARIANT vtIndex;
-                    VariantInit(&vtIndex);
-                    vtIndex.vt = VT_I4;
-                    vtIndex.lVal = i;
+            for (long i = 0; i < count; i++) {
+                VARIANT vtIndex;
+                VariantInit(&vtIndex);
+                vtIndex.vt = VT_I4;
+                vtIndex.lVal = i;
 
-                    IDispatch* pDisp = nullptr;
-                    if (SUCCEEDED(pShellWindows->Item(vtIndex, &pDisp)) && pDisp) {
-                        IWebBrowserApp* pBrowser;
-                        hr = pDisp->QueryInterface(IID_IWebBrowserApp, (void**)&pBrowser);
+                IDispatch* pDisp = nullptr;
+                if (SUCCEEDED(pShellWindows->Item(vtIndex, &pDisp)) && pDisp) {
+                    IWebBrowserApp* pBrowser;
+                    hr = pDisp->QueryInterface(IID_IWebBrowserApp, (void**)&pBrowser);
+
+                    if (SUCCEEDED(hr)) {
+                        SHANDLE_PTR hwndPtr;
+                        hr = pBrowser->get_HWND(&hwndPtr);
 
                         if (SUCCEEDED(hr)) {
-                            SHANDLE_PTR hwndPtr;
-                            hr = pBrowser->get_HWND(&hwndPtr);
+                            HWND hwnd = (HWND)hwndPtr;
+                            
+                            ITaskbarList3* pTaskbarList;
+                            hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pTaskbarList));
 
                             if (SUCCEEDED(hr)) {
-                                HWND hwnd = (HWND)hwndPtr;
-                                
-                                ITaskbarList3* pTaskbarList;
-                                hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pTaskbarList));
-
-                                if (SUCCEEDED(hr)) {
-                                    // clear the icon
-                                    pTaskbarList->SetOverlayIcon(hwnd, NULL, L"");
-                                
-                                    pTaskbarList->Release();
-                                }
+                                // clear the icon
+                                pTaskbarList->SetOverlayIcon(hwnd, NULL, L"");
+                            
+                                pTaskbarList->Release();
                             }
-
-                            pBrowser->Release();
                         }
 
-                        pDisp->Release();
+                        pBrowser->Release();
                     }
+
+                    pDisp->Release();
                 }
             }
+
+            pShellWindows->Release();
         }
 
         CoUninitialize();
